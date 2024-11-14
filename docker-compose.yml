@@ -1,0 +1,43 @@
+services:
+  moodle:
+    build: .
+    ports:
+      - "5000:80"
+    volumes:
+      - ./moodle:/var/www/html
+      - ./moodledata:/var/www/moodledata
+      - ./logs:/var/log
+    environment:
+      - MOODLE_URL=http://127.0.0.1
+    depends_on:
+      - db
+    command: >
+      bash -c "mkdir -p /var/www/moodledata &&
+               chown -R www-data:www-data /var/www/moodledata &&
+               apache2-foreground"
+    restart: always
+
+  db:
+    image: mysql:8.0
+    ports:
+      - '5003:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_DATABASE: moodle_back
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: 12345
+    volumes:
+      - ./dbdata:/var/lib/mysql
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "5004:80"
+    links:
+      - db:database
+    environment:
+      PMA_HOST: database
+      PMA_ARBITRARY: 1
+      UPLOAD_LIMIT: 100M
+    restart: always
